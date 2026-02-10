@@ -7,16 +7,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Токен (на Railway він береться з змінних середовища)
+// ✅ БЕЗПЕЧНО: Токен береться тільки зі змінних середовища
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 
+// Перевірка наявності токену
+if (!TELEGRAM_TOKEN) {
+    console.error('❌ ПОМИЛКА: TELEGRAM_TOKEN не встановлено!');
+    console.error('Додайте змінну середовища TELEGRAM_TOKEN на Railway або у .env файл локально');
+    process.exit(1);
+}
+
+const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
 // Зберігання користувачів
-// Примітка: При перезапуску сервера на Railway цей об'єкт очиститься.
-// Для стабільної роботи краще підключити MongoDB або Redis, але для старту цього вистачить.
 let users = {};
 
-// --- 1. Оновлена структура розкладу з посиланнями ---
-// Заповніть реальні посилання та паролі
+// --- Структура розкладу ---
 const scheduleZnamennyk = {
   1: [ // Понеділок
     { 
@@ -73,27 +79,19 @@ function getKyivTime() {
     return new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Kiev"}));
 }
 
-// --- 2. Виправлена логіка тижнів ---
+// --- Визначення типу тижня ---
 function getWeekType() {
-  // Встановлюємо дату початку семестру (або будь-який понеділок, який точно є Чисельником)
-  // Припустимо, що 2 лютого 2025 був Чисельник (1-й тиждень)
   const semesterStart = new Date('2025-02-02T00:00:00'); 
   const now = getKyivTime();
   
-  // Різниця в часі в мілісекундах
   const diffTime = Math.abs(now - semesterStart);
-  // Переводимо в дні
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-  // Рахуємо номер тижня
   const weekNumber = Math.ceil(diffDays / 7);
 
-  // Якщо тиждень непарний (1, 3, 5) -> Чисельник
-  // Якщо тиждень парний (2, 4, 6) -> Знаменник
-  // Ви можете змінити return місцями, якщо все одно не сходиться
   return (weekNumber % 2 === 0) ? 'znamennyk' : 'chyselnyk';
 }
 
-// Функція формування красивого повідомлення
+// Функція формування повідомлення
 function formatLessonMessage(lesson, header = '') {
     let msg = header ? `${header}\n\n` : '';
     msg += `🕒 <b>${lesson.time}</b> | Пара №${lesson.number}\n`;
@@ -114,11 +112,9 @@ function formatLessonMessage(lesson, header = '') {
 }
 
 // --- Обробка команд ---
-
 bot.onText(/\/start(.*)/, (msg, match) => {
   const chatId = msg.chat.id;
   
-  // Ініціалізуємо користувача, якщо його немає
   if (!users[chatId]) {
       users[chatId] = { chatId: chatId, active: true, period: 'semester' };
   }
@@ -141,7 +137,6 @@ bot.onText(/\/start(.*)/, (msg, match) => {
   );
 });
 
-// --- 3. Реалізація команди /settings ---
 bot.onText(/\/settings/, (msg) => {
     const chatId = msg.chat.id;
     const user = users[chatId] || { active: false };
@@ -159,7 +154,6 @@ bot.onText(/\/settings/, (msg) => {
     bot.sendMessage(chatId, `Налаштування сповіщень:\nСтатус: ${status}`, opts);
 });
 
-// Обробка кнопок налаштувань
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     
@@ -169,7 +163,6 @@ bot.on('callback_query', (query) => {
         users[chatId].active = !users[chatId].active;
         const newStatus = users[chatId].active ? '✅ УВІМКНЕНО' : '🔕 ВИМКНЕНО';
         
-        // Оновлюємо повідомлення
         bot.editMessageText(`Налаштування сповіщень:\nСтатус: ${newStatus}`, {
             chat_id: chatId,
             message_id: query.message.message_id,
@@ -218,13 +211,12 @@ bot.onText(/\/week/, (msg) => {
   );
 });
 
-// --- 4. Тестова команда /today_notification ---
 bot.onText(/\/today_notification/, (msg) => {
     const chatId = msg.chat.id;
     const weekType = getWeekType();
     const schedule = weekType === 'znamennyk' ? scheduleZnamennyk : scheduleChyselnyk;
     const now = getKyivTime();
-    const dayOfWeek = now.getDay(); // 0-Sun, 1-Mon...
+    const dayOfWeek = now.getDay();
 
     if (dayOfWeek === 0 || dayOfWeek === 6) {
         return bot.sendMessage(chatId, 'Сьогодні вихідний, пар немає для тесту.');
@@ -243,7 +235,7 @@ bot.onText(/\/today_notification/, (msg) => {
     });
 });
 
-// API endpoint для сайту
+// API endpoint
 app.post('/api/activate', (req, res) => {
   const { chatId, period } = req.body;
   if (!chatId) return res.status(400).json({ error: 'chatId required' });
@@ -259,9 +251,20 @@ app.post('/api/activate', (req, res) => {
   res.json({ success: true });
 });
 
-// --- CRON JOB ---
+app.post('/api/deactivate', (req, res) => {
+  const { chatId } = req.body;
+  
+  if (users[chatId]) {
+    users[chatId].active = false;
+    bot.sendMessage(chatId, '🔕 Сповіщення вимкнено');
+  }
+  
+  res.json({ success: true });
+});
+
+// CRON JOB
 cron.schedule('* * * * *', () => {
-  const now = getKyivTime(); // Використовуємо час Києва
+  const now = getKyivTime();
   const dayOfWeek = now.getDay();
   
   if (dayOfWeek === 0 || dayOfWeek === 6) return;
@@ -278,11 +281,9 @@ cron.schedule('* * * * *', () => {
     const [lh, lm] = lesson.time.split(':').map(Number);
     const lessonTimeTotal = lh * 60 + lm;
     
-    // Перевірка: за 5 хвилин до пари
     if (lessonTimeTotal - currentTimeTotal === 5) {
       Object.values(users).forEach(user => {
         if (user.active) {
-            // Тут можна додати перевірку isPeriodActive(user), якщо потрібно
             const msg = formatLessonMessage(lesson, '🔔 <b>Пара через 5 хвилин!</b>');
             bot.sendMessage(user.chatId, msg, { parse_mode: 'HTML' });
         }
@@ -291,13 +292,10 @@ cron.schedule('* * * * *', () => {
   });
 });
 
-
-// Головна сторінка для перевірки сервера
 app.get('/', (req, res) => {
   res.send('✅ Сервер розкладу БК-612 працює! Бот активний.');
 });
 
-// Тестовий маршрут для перевірки часу
 app.get('/api/test-time', (req, res) => {
   const now = new Date();
   const kyivTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Kiev"}));
@@ -307,11 +305,9 @@ app.get('/api/test-time', (req, res) => {
     week_type: getWeekType()
   });
 });
-// udoli
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Bot is active`);
 });
-
-
