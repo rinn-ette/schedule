@@ -91,7 +91,7 @@ bot.onText(/\/start(.*)/, (msg, match) => {
     inline_keyboard: [[
       { 
         text: '🌐 Перейти на сайт',
-        url: `https://your-netlify-site.netlify.app/?chatId=${chatId}`
+        url: `https://schedule-bk612.netlify.app/?chatId=${chatId}`
       }
     ]]
   };
@@ -242,3 +242,4 @@ app.listen(PORT, () => {
   console.log('Bot is running...');
 
 });
+
