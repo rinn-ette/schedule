@@ -292,7 +292,26 @@ cron.schedule('* * * * *', () => {
   });
 });
 
+
+// Головна сторінка для перевірки сервера
+app.get('/', (req, res) => {
+  res.send('✅ Сервер розкладу БК-612 працює! Бот активний.');
+});
+
+// Тестовий маршрут для перевірки часу
+app.get('/api/test-time', (req, res) => {
+  const now = new Date();
+  const kyivTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Kiev"}));
+  res.json({
+    utc_time: now.toISOString(),
+    kyiv_time: kyivTime.toString(),
+    week_type: getWeekType()
+  });
+});
+// udoli
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
