@@ -8,8 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 // Токен (на Railway він береться з змінних середовища)
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || '8356992046:AAGR7RF10nc1gUx431OsMsiHhz-qQHuzadI';
-const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+
 
 // Зберігання користувачів
 // Примітка: При перезапуску сервера на Railway цей об'єкт очиститься.
@@ -314,4 +313,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
 
