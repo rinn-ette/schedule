@@ -1,0 +1,22 @@
+# Залежності
+node_modules/
+
+# Змінні середовища (ВАЖЛИВО!)
+.env
+.env.local
+.env.production
+
+# Логи
+logs/
+*.log
+npm-debug.log*
+
+# Системні файли
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
