@@ -45,7 +45,7 @@ const scheduleZnamennyk = {
     { number: '2', time: '10:05', subject: 'Інноваційне підприємництво', type: 'Пз', link: 'https://us05web.zoom.us/j/7842565658?pwd=UEl3aUN1ZUNnOGxWSis0b2M2cy85UT09', meetingId: '', pass: '' }
   ],
   4: [ // Четвер
-    { number: '5', time: '14:55', subject: 'Кібербезпека в системах автоматизації', type: 'Лб', link: '', meetingId: '341 249 2658', pass: '777-777' },
+    { number: '4', time: '13:25', subject: 'Кібербезпека в системах автоматизації', type: 'Лб', link: '', meetingId: '341 249 2658', pass: '777-777' },
     { number: '~7', time: '18:00', subject: 'Сучасні технології виробництва', type: 'Лк', link: 'https://us05web.zoom.us/j/81099898775?pwd=lJYUYCaUkywPSSN6uHTdLzLseZW6tH.1', meetingId: '810 9989 8775', pass: '111' }
   ],
   5: [ // П'ятниця
@@ -69,7 +69,7 @@ const scheduleChyselnyk = {
     { number: '2', time: '10:05', subject: 'Інноваційне підприємництво', type: 'Пз', link: 'https://us05web.zoom.us/j/7842565658?pwd=UEl3aUN1ZUNnOGxWSis0b2M2cy85UT09', meetingId: '', pass: '' }
   ],
   4: [ // Четвер
-    { number: '5', time: '14:55', subject: 'Кібербезпека в системах автоматизації', type: 'Лб', link: '', meetingId: '341 249 2658', pass: '777-777' }
+    { number: '4', time: '13:25', subject: 'Кібербезпека в системах автоматизації', type: 'Лб', link: '', meetingId: '341 249 2658', pass: '777-777' }
   ],
   5: [] // П'ятниця
 };
